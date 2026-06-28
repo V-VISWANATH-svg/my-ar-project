@@ -159,94 +159,54 @@
     AFRAME.registerComponent('video-handler', {
       init: function () {
         const marker = this.el;
-        const video = document.querySelector('#ar-video');
         const aVideo = marker.querySelector('a-video');
-        const scannerGuide = document.querySelector('#scanner-guide');
-
-        function log(msg) {
-          console.log("[AR Debug]", msg);
-        }
 
         // Target Found
         marker.addEventListener('targetFound', () => {
-          log("Image Target Detected!");
+          console.log("[AR] Image Target Found");
+          
+          // Dynamically fetch elements inside the event listener to avoid null race conditions
+          const video = document.querySelector('#ar-video');
+          const scannerGuide = document.querySelector('#scanner-guide');
           
           try {
-            let aspect = MANUAL_ASPECT_RATIO;
+            const aspect = MANUAL_ASPECT_RATIO || 1.4;
+            console.log(`[AR] Applying Aspect Ratio: ${aspect}`);
             
-            if (!aspect) {
-              log("Attempting automatic aspect ratio detection...");
-              const sceneEl = document.querySelector('a-scene');
-              const arSystem = sceneEl.systems["mindar-image-system"];
-              if (arSystem && arSystem.controller) {
-                const targetAttr = marker.getAttribute('mindar-image-target');
-                const match = targetAttr.match(/targetIndex:\s*(\d+)/);
-                const targetIndex = match ? parseInt(match[1]) : 0;
-                
-                function findDimensions(obj, depth = 0) {
-                  if (!obj || depth > 3) return null;
-                  let foundW = obj.width || obj.w;
-                  let foundH = obj.height || obj.h;
-                  if (foundW && foundH) return { width: foundW, height: foundH };
-                  
-                  for (const key in obj) {
-                    if (typeof obj[key] === 'object' && obj[key] !== null) {
-                      const res = findDimensions(obj[key], depth + 1);
-                      if (res) return res;
-                    }
-                  }
-                  return null;
-                }
-
-                const controller = arSystem.controller;
-                let targetsList = controller.targets || controller.imageTargets;
-                if (!targetsList) {
-                  for (const key in controller) {
-                    if (key.toLowerCase().includes("target") && Array.isArray(controller[key])) {
-                      targetsList = controller[key];
-                      break;
-                    }
-                  }
-                }
-                
-                if (targetsList && targetsList[targetIndex]) {
-                  const dims = findDimensions(targetsList[targetIndex]);
-                  if (dims) {
-                    aspect = dims.height / dims.width;
-                    log(`Auto-detected target dimensions: ${dims.width}x${dims.height}, Aspect: ${aspect}`);
-                  }
-                }
-              }
-            }
-
-            if (aspect) {
-              log(`Applying Aspect Ratio: ${aspect}`);
-              // Set attributes
-              aVideo.setAttribute('width', '1');
-              aVideo.setAttribute('height', aspect.toString());
-              
-              // Force update A-Frame geometry component
-              aVideo.setAttribute('geometry', {
-                primitive: 'plane',
-                width: 1,
-                height: aspect
-              });
-            } else {
-              log("Warning: Aspect ratio detection failed, using fallback 0.5625");
-            }
+            // Set attributes
+            aVideo.setAttribute('width', '1');
+            aVideo.setAttribute('height', aspect.toString());
+            
+            // Force update A-Frame geometry component
+            aVideo.setAttribute('geometry', {
+              primitive: 'plane',
+              width: 1,
+              height: aspect
+            });
           } catch (e) {
-            log("Error setting aspect ratio: " + e.message);
+            console.error("[AR] Error setting aspect ratio:", e);
           }
 
-          if (video) video.play();
-          if (scannerGuide) scannerGuide.style.display = 'none'; // Hide scanning guide
+          if (video) {
+            video.play().catch(err => console.error("[AR] Video play failed:", err));
+          }
+          if (scannerGuide) {
+            scannerGuide.style.display = 'none'; // Hide scanning guide
+          }
         });
 
         // Target Lost
         marker.addEventListener('targetLost', () => {
-          log("Image Target Lost!");
-          if (video) video.pause();
-          if (scannerGuide) scannerGuide.style.display = 'flex'; // Show scanning guide again
+          console.log("[AR] Image Target Lost");
+          const video = document.querySelector('#ar-video');
+          const scannerGuide = document.querySelector('#scanner-guide');
+          
+          if (video) {
+            video.pause();
+          }
+          if (scannerGuide) {
+            scannerGuide.style.display = 'flex'; // Show scanning guide again
+          }
         });
       }
     });
@@ -313,11 +273,7 @@
     const scannerGuide = document.getElementById('scanner-guide');
     const sceneEl = document.querySelector('a-scene');
 
-    function log(msg) {
-      console.log("[AR Debug]", msg);
-    }
-
-    log("App initialized - Production Build");
+    console.log("[AR] App initialized - v2.0");
 
     startBtn.addEventListener('click', () => {
       // Unlock mobile browser audio constraints
@@ -325,9 +281,9 @@
       if (video) {
         video.play().then(() => {
           video.pause();
-          log("Audio unlocked successfully.");
+          console.log("[AR] Audio unlocked successfully.");
         }).catch(err => {
-          log("Audio unlock failed: " + err.message);
+          console.error("[AR] Audio unlock failed:", err);
         });
       }
 
@@ -343,7 +299,7 @@
         if (arSystem) {
           // Mock the UI if it's undefined to prevent library crash on "uiLoading: no"
           if (!arSystem.ui) {
-            log("UI is undefined. Mocking UI to prevent crash.");
+            console.log("[AR] UI is undefined. Mocking UI to prevent crash.");
             arSystem.ui = {
               showLoading: () => {},
               hideLoading: () => {},
@@ -355,12 +311,12 @@
           }
           
           arSystem.start();
-          log("AR tracking started successfully.");
+          console.log("[AR] Tracking started successfully.");
         } else {
-          log("Error: AR System not found.");
+          console.error("[AR] Error: AR System not found.");
         }
       } catch (err) {
-        log("AR Start Error: " + err.message);
+        console.error("[AR] AR Start Error:", err);
       }
     });
   </script>
