@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <title>Magic AR Frame</title>
+  
+  <!-- A-Frame and MindAR libraries -->
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #000;
+    }
+
+    /* Premium Glassmorphism UI Overlay */
+    #overlay-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.9) 0%, rgba(2, 6, 23, 0.98) 100%);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #fff;
+      transition: opacity 0.5s ease;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 40px 30px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      transform: translateY(0);
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    p {
+      color: #94a3b8;
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      border: none;
+      color: white;
+      padding: 16px 36px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+      transition: all 0.3s ease;
+      outline: none;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-start:hover {
+      transform: scale(1.05);
+      box-shadow: 0 15px 30px rgba(139, 92, 246, 0.5);
+    }
+
+    .btn-start:active {
+      transform: scale(0.98);
+    }
+
+    /* Scanning animation overlay (Only visible when AR is active) */
+    #scanner-guide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scan-box {
+      width: 280px;
+      height: 380px;
+      border: 3px solid rgba(59, 130, 246, 0.5);
+      border-radius: 20px;
+      position: relative;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+    }
+
+    .scan-line {
+      position: absolute;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #3b82f6, #8b5cf6, #3b82f6, transparent);
+      box-shadow: 0 0 15px #8b5cf6;
+      animation: scan 3s linear infinite;
+    }
+
+    @keyframes scan {
+      0% { top: 0%; }
+      50% { top: 100%; }
+      100% { top: 0%; }
+    }
+
+    .scan-text {
+      color: #fff;
+      margin-top: 20px;
+      font-size: 1rem;
+      font-weight: 500;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      background: rgba(0, 0, 0, 0.6);
+      padding: 8px 16px;
+      border-radius: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Elegant Version Badge at the bottom left */
+    #version-badge {
+      position: absolute;
+      bottom: 15px;
+      left: 15px;
+      color: rgba(255, 255, 255, 0.75);
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 500;
+      z-index: 10000;
+      border-radius: 20px;
+      pointer-events: none;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+  </style>
+
+  <!-- CRITICAL: A-Frame components MUST be registered in the <head> before <a-scene> is parsed -->
+  <script>
+    // --- MANUAL CONFIGURATION OVERRIDE ---
+    // Height / Width aspect ratio of your target photo
+    // Example: For a standard vertical photo, use 1.4 or 1.5. Set to null for auto-detect.
+    const MANUAL_ASPECT_RATIO = 1.4;
+
+    AFRAME.registerComponent('video-handler', {
+      init: function () {
+        const marker = this.el;
+        const aVideo = marker.querySelector('a-video');
+        let playPromise = null; // Track the active play promise to prevent interruptions
+
+        function updateBadge(status, color) {
+          const badge = document.getElementById('version-badge');
+          if (badge) {
+            badge.innerText = `v3.0 - ${status}`;
+            if (color) badge.style.borderColor = color;
+          }
+        }
+
+        // Target Found
+        marker.addEventListener('targetFound', () => {
+          console.log("[AR] Image Target Detected!");
+          updateBadge("Active", "rgba(59, 130, 246, 0.6)"); // Blue border for active
+          
+          // Dynamically fetch elements inside the event listener to avoid null race conditions
+          const video = document.querySelector('#ar-video');
+          const scannerGuide = document.querySelector('#scanner-guide');
+          
+          try {
+            const aspect = MANUAL_ASPECT_RATIO || 1.4;
+            
+            // Set attributes
+            aVideo.setAttribute('width', '1');
+            aVideo.setAttribute('height', aspect.toString());
+            
+            // Force update A-Frame geometry component
+            aVideo.setAttribute('geometry', {
+              primitive: 'plane',
+              width: 1,
+              height: aspect
+            });
+          } catch (e) {
+            console.error("[AR] Error setting aspect ratio:", e);
+          }
+
+          if (video) {
+            playPromise = video.play();
+            if (playPromise !== undefined) {
+              playPromise
+                .then(() => console.log("[AR] Video playing successfully!"))
+                .catch(err => console.error("[AR] Video play failed:", err));
+            }
+          }
+          
+          if (scannerGuide) {
+            scannerGuide.style.display = 'none'; // Hide scanning guide
+          }
+        });
+
+        // Target Lost
+        marker.addEventListener('targetLost', () => {
+          console.log("[AR] Image Target Lost!");
+          updateBadge("Scanning", "rgba(255, 255, 255, 0.1)");
+          
+          const video = document.querySelector('#ar-video');
+          const scannerGuide = document.querySelector('#scanner-guide');
+          
+          if (video) {
+            // Safe pause: wait for any active play promise to resolve first to prevent AbortError interrupts
+            if (playPromise) {
+              playPromise.then(() => {
+                video.pause();
+              }).catch(() => {
+                video.pause();
+              });
+            } else {
+              video.pause();
+            }
+          }
+          if (scannerGuide) {
+            scannerGuide.style.display = 'flex'; // Show scanning guide again
+          }
+        });
+      }
+    });
+  </script>
+</head>
+<body>
+
+  <!-- Premium Overlay Screen for Audio Unmute Activation -->
+  <div id="overlay-container">
+    <div class="card">
+      <h1>Magic AR Frame</h1>
+      <p>Camera permission-ஐ allow செய்யவும். பின் Frame-ல் உள்ள Photo-ஐ scan செய்யவும்.</p>
+      <button class="btn-start" id="btn-start">START EXPERIENCE</button>
+    </div>
+  </div>
+
+  <!-- Camera Scanning Guide -->
+  <div id="scanner-guide">
+    <div class="scan-box">
+      <div class="scan-line"></div>
+    </div>
+    <div class="scan-text">Photo-ஐ கேமரா நேராக காட்டவும்</div>
+  </div>
+
+  <!-- Elegant Status Badge (Clean alternative to raw debug logs) -->
+  <div id="version-badge">v3.0 - Ready</div>
+
+  <!-- AR Scene Setup (autoStart set to false so it waits for click to trigger browser permission) -->
+  <a-scene 
+    mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 15; filterMinCF: 0.001; filterBeta: 10;" 
+    color-space="sRGB" 
+    renderer="colorManagement: true, physicallyCorrectLights: true" 
+    vr-mode-ui="enabled: false" 
+    device-orientation-permission-ui="enabled: false">
+    
+    <a-assets>
+      <!-- Target Video File (Must be local video.mp4 in GitHub Repo) -->
+      <video 
+        id="ar-video" 
+        src="./video.mp4" 
+        preload="auto" 
+        loop="true" 
+        crossorigin="anonymous"
+        playsinline 
+        webkit-playsinline>
+      </video>
+    </a-assets>
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <!-- AR Target (index 0 corresponds to the compiled photo in targets.mind) -->
+    <a-entity mindar-image-target="targetIndex: 0" video-handler>
+      <!-- Aspect ratio will be updated dynamically via JS -->
+      <a-video 
+        src="#ar-video" 
+        width="1" 
+        height="0.5625" 
+        position="0 0 0" 
+        rotation="0 0 0">
+      </a-video>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    const startBtn = document.getElementById('btn-start');
+    const overlay = document.getElementById('overlay-container');
+    const scannerGuide = document.getElementById('scanner-guide');
+    const sceneEl = document.querySelector('a-scene');
+
+    console.log("[AR] App initialized - v3.0");
+
+    // Force continuous autofocus and HD resolution at camera initialization (safe fallback mode)
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = function(constraints) {
+        if (constraints && constraints.video) {
+          if (typeof constraints.video === 'object') {
+            // Request ideal HD resolution without enforcing strict min constraints to prevent crashes on older cameras
+            constraints.video.width = { ideal: 1280 };
+            constraints.video.height = { ideal: 720 };
+            // Request continuous hardware autofocus
+            constraints.video.advanced = [{ focusMode: "continuous" }];
+          }
+        }
+        return originalGetUserMedia(constraints);
+      };
+    }
+
+    startBtn.addEventListener('click', () => {
+      // Unlock mobile browser audio constraints (Stable method without load() interrupts)
+      const video = document.getElementById('ar-video');
+      if (video) {
+        video.play().then(() => {
+          video.pause();
+          console.log("[AR] Audio unlocked successfully.");
+        }).catch(err => {
+          console.error("[AR] Audio unlock failed:", err);
+        });
+      }
+
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        if (scannerGuide) scannerGuide.style.display = 'flex';
+      }, 500);
+
+      // Start the MindAR camera tracking manually inside user gesture (resolves black screen)
+      try {
+        const arSystem = sceneEl.systems["mindar-image-system"];
+        if (arSystem) {
+          // Mock the UI if it's undefined to prevent library crash on "uiLoading: no"
+          if (!arSystem.ui) {
+            console.log("[AR] UI is undefined. Mocking UI to prevent crash.");
+            arSystem.ui = {
+              showLoading: () => {},
+              hideLoading: () => {},
+              showScanning: () => {},
+              hideScanning: () => {},
+              showError: () => {},
+              hideError: () => {}
+            };
+          }
+          
+          arSystem.start();
+          document.getElementById('version-badge').innerText = 'v3.0 - Scanning';
+          console.log("[AR] Tracking started successfully.");
+        } else {
+          console.error("[AR] Error: AR System not found.");
+        }
+      } catch (err) {
+        console.error("[AR] AR Start Error:", err);
+      }
+    });
+  </script>
+</body>
+</html>
