@@ -162,14 +162,9 @@
         const video = document.querySelector('#ar-video');
         const aVideo = marker.querySelector('a-video');
         const scannerGuide = document.querySelector('#scanner-guide');
-        const debugLog = document.querySelector('#debug-log');
 
         function log(msg) {
           console.log("[AR Debug]", msg);
-          if (debugLog) {
-            debugLog.style.display = 'block';
-            debugLog.innerHTML += msg + '<br>';
-          }
         }
 
         // Target Found
@@ -276,9 +271,6 @@
     <div class="scan-text">Photo-ஐ கேமரா நேராக காட்டவும்</div>
   </div>
 
-  <!-- On-Screen Debug Info (Helps troubleshoot caching & dimension detection) -->
-  <div id="debug-log" style="position: absolute; bottom: 10px; left: 10px; color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.7); padding: 8px 12px; font-size: 10px; z-index: 10000; font-family: monospace; border-radius: 8px; pointer-events: none; max-width: 80%; display: none;"></div>
-
   <!-- AR Scene Setup (autoStart set to false so it waits for click to trigger browser permission) -->
   <a-scene 
     mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no; filterMinCF:0.0001; filterBeta: 0.001;" 
@@ -320,17 +312,12 @@
     const overlay = document.getElementById('overlay-container');
     const scannerGuide = document.getElementById('scanner-guide');
     const sceneEl = document.querySelector('a-scene');
-    const debugLog = document.getElementById('debug-log');
 
     function log(msg) {
       console.log("[AR Debug]", msg);
-      if (debugLog) {
-        debugLog.style.display = 'block';
-        debugLog.innerHTML += msg + '<br>';
-      }
     }
 
-    log("App initialized - v1.8");
+    log("App initialized - Production Build");
 
     startBtn.addEventListener('click', () => {
       // Unlock mobile browser audio constraints
@@ -358,12 +345,12 @@
           if (!arSystem.ui) {
             log("UI is undefined. Mocking UI to prevent crash.");
             arSystem.ui = {
-              showLoading: () => log("UI: showLoading (mock)"),
-              hideLoading: () => log("UI: hideLoading (mock)"),
-              showScanning: () => log("UI: showScanning (mock)"),
-              hideScanning: () => log("UI: hideScanning (mock)"),
-              showError: () => log("UI: showError (mock)"),
-              hideError: () => log("UI: hideError (mock)")
+              showLoading: () => {},
+              hideLoading: () => {},
+              showScanning: () => {},
+              hideScanning: () => {},
+              showError: () => {},
+              hideError: () => {}
             };
           }
           
