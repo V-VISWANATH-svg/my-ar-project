@@ -8,7 +8,6 @@
   <!-- A-Frame and MindAR libraries -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-
   <style>
     body {
       margin: 0;
@@ -16,7 +15,6 @@
       font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: #000;
     }
-
     /* Premium Glassmorphism UI Overlay */
     #overlay-container {
       position: absolute;
@@ -38,7 +36,6 @@
       padding: 20px;
       box-sizing: border-box;
     }
-
     .card {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -50,12 +47,10 @@
       transform: translateY(0);
       animation: float 4s ease-in-out infinite;
     }
-
     @keyframes float {
       0%, 100% { transform: translateY(0px); }
       50% { transform: translateY(-10px); }
     }
-
     h1 {
       font-size: 2.2rem;
       margin-bottom: 10px;
@@ -65,14 +60,12 @@
       font-weight: 800;
       letter-spacing: -0.5px;
     }
-
     p {
       color: #94a3b8;
       font-size: 1rem;
       line-height: 1.6;
       margin-bottom: 30px;
     }
-
     .btn-start {
       background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
       border: none;
@@ -87,16 +80,13 @@
       outline: none;
       letter-spacing: 0.5px;
     }
-
     .btn-start:hover {
       transform: scale(1.05);
       box-shadow: 0 15px 30px rgba(139, 92, 246, 0.5);
     }
-
     .btn-start:active {
       transform: scale(0.98);
     }
-
     /* Scanning animation overlay (Only visible when AR is active) */
     #scanner-guide {
       position: absolute;
@@ -111,7 +101,6 @@
       align-items: center;
       justify-content: center;
     }
-
     .scan-box {
       width: 280px;
       height: 380px;
@@ -120,7 +109,6 @@
       position: relative;
       box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
     }
-
     .scan-line {
       position: absolute;
       width: 100%;
@@ -129,13 +117,11 @@
       box-shadow: 0 0 15px #8b5cf6;
       animation: scan 3s linear infinite;
     }
-
     @keyframes scan {
       0% { top: 0%; }
       50% { top: 100%; }
       100% { top: 0%; }
     }
-
     .scan-text {
       color: #fff;
       margin-top: 20px;
@@ -147,7 +133,6 @@
       border-radius: 20px;
       backdrop-filter: blur(4px);
     }
-
     /* Elegant Version Badge at the bottom left */
     #version-badge {
       position: absolute;
@@ -169,28 +154,24 @@
       transition: all 0.3s ease;
     }
   </style>
-
   <!-- CRITICAL: A-Frame components MUST be registered in the <head> before <a-scene> is parsed -->
   <script>
     // --- MANUAL CONFIGURATION OVERRIDE ---
     // Height / Width aspect ratio of your target photo
     // Example: For a standard vertical photo, use 1.4 or 1.5. Set to null for auto-detect.
     const MANUAL_ASPECT_RATIO = 1.4;
-
     AFRAME.registerComponent('video-handler', {
       init: function () {
         const marker = this.el;
         const aVideo = marker.querySelector('a-video');
         let playPromise = null; // Track the active play promise to prevent interruptions
-
         function updateBadge(status, color) {
           const badge = document.getElementById('version-badge');
           if (badge) {
-            badge.innerText = `v3.1 - ${status}`;
+            badge.innerText = `v3.2 - ${status}`;
             if (color) badge.style.borderColor = color;
           }
         }
-
         // Target Found
         marker.addEventListener('targetFound', () => {
           console.log("[AR] Image Target Detected!");
@@ -216,7 +197,6 @@
           } catch (e) {
             console.error("[AR] Error setting aspect ratio:", e);
           }
-
           if (video) {
             playPromise = video.play();
             if (playPromise !== undefined) {
@@ -230,7 +210,6 @@
             scannerGuide.style.display = 'none'; // Hide scanning guide
           }
         });
-
         // Target Lost
         marker.addEventListener('targetLost', () => {
           console.log("[AR] Image Target Lost!");
@@ -260,7 +239,6 @@
   </script>
 </head>
 <body>
-
   <!-- Premium Overlay Screen for Audio Unmute Activation -->
   <div id="overlay-container">
     <div class="card">
@@ -269,7 +247,6 @@
       <button class="btn-start" id="btn-start">START EXPERIENCE</button>
     </div>
   </div>
-
   <!-- Camera Scanning Guide -->
   <div id="scanner-guide">
     <div class="scan-box">
@@ -277,10 +254,8 @@
     </div>
     <div class="scan-text">Photo-ஐ கேமரா நேராக காட்டவும்</div>
   </div>
-
   <!-- Elegant Status Badge (Clean alternative to raw debug logs) -->
-  <div id="version-badge">v3.1 - Ready</div>
-
+  <div id="version-badge">v3.2 - Ready</div>
   <!-- AR Scene Setup (autoStart set to false so it waits for click to trigger browser permission) -->
   <a-scene 
     mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 15; filterMinCF: 0.001; filterBeta: 10;" 
@@ -301,9 +276,7 @@
         webkit-playsinline>
       </video>
     </a-assets>
-
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
     <!-- AR Target (index 0 corresponds to the compiled photo in targets.mind) -->
     <a-entity mindar-image-target="targetIndex: 0" video-handler>
       <!-- Aspect ratio will be updated dynamically via JS -->
@@ -316,15 +289,12 @@
       </a-video>
     </a-entity>
   </a-scene>
-
   <script>
     const startBtn = document.getElementById('btn-start');
     const overlay = document.getElementById('overlay-container');
     const scannerGuide = document.getElementById('scanner-guide');
     const sceneEl = document.querySelector('a-scene');
-
-    console.log("[AR] App initialized - v3.1");
-
+    console.log("[AR] App initialized - v3.2");
     // Force continuous autofocus at camera initialization (tested stable method)
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
@@ -349,8 +319,23 @@
         }
       };
     }
-
-    startBtn.addEventListener('click', () => {
+    // KEY FIX: Kill any cached/stale camera streams before starting AR.
+    // "Allow all the time" permission causes Android Chrome to reuse old frozen streams.
+    // Stopping all tracks forces Chrome to open a fresh stream every time.
+    async function killAllCameraTracks() {
+      try {
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        tempStream.getTracks().forEach(track => {
+          track.stop();
+          console.log("[AR] Stopped cached camera track:", track.label);
+        });
+      } catch (e) {
+        console.log("[AR] No cached stream to kill:", e.message);
+      }
+    }
+    startBtn.addEventListener('click', async () => {
+      // Step 1: Kill any frozen/cached streams from "Allow all the time" permission
+      await killAllCameraTracks();
       // Unlock mobile browser audio constraints (Stable method without load() interrupts)
       const video = document.getElementById('ar-video');
       if (video) {
@@ -361,13 +346,11 @@
           console.error("[AR] Audio unlock failed:", err);
         });
       }
-
       overlay.style.opacity = '0';
       setTimeout(() => {
         overlay.style.display = 'none';
         if (scannerGuide) scannerGuide.style.display = 'flex';
       }, 500);
-
       // Start the MindAR camera tracking manually inside user gesture (resolves black screen)
       try {
         const arSystem = sceneEl.systems["mindar-image-system"];
@@ -386,7 +369,7 @@
           }
           
           arSystem.start();
-          document.getElementById('version-badge').innerText = 'v3.1 - Scanning';
+          document.getElementById('version-badge').innerText = 'v3.2 - Scanning';
           console.log("[AR] Tracking started successfully.");
         } else {
           console.error("[AR] Error: AR System not found.");
