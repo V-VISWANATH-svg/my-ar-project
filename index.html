@@ -168,7 +168,7 @@
         function updateBadge(status, color) {
           const badge = document.getElementById('version-badge');
           if (badge) {
-            badge.innerText = `v3.2 - ${status}`;
+            badge.innerText = `v3.3 - ${status}`;
             if (color) badge.style.borderColor = color;
           }
         }
@@ -255,10 +255,10 @@
     <div class="scan-text">Photo-ஐ கேமரா நேராக காட்டவும்</div>
   </div>
   <!-- Elegant Status Badge (Clean alternative to raw debug logs) -->
-  <div id="version-badge">v3.2 - Ready</div>
+  <div id="version-badge">v3.3 - Ready</div>
   <!-- AR Scene Setup (autoStart set to false so it waits for click to trigger browser permission) -->
   <a-scene 
-    mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 15; filterMinCF: 0.001; filterBeta: 10;" 
+    mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no; warmupTolerance: 2; missTolerance: 10; filterMinCF: 0.1; filterBeta: 0.001;" 
     color-space="sRGB" 
     renderer="colorManagement: true, physicallyCorrectLights: true" 
     vr-mode-ui="enabled: false" 
@@ -283,8 +283,8 @@
       <a-video 
         src="#ar-video" 
         width="1" 
-        height="0.5625" 
-        position="0 0 0" 
+        height="1.4" 
+        position="0 0 0.001" 
         rotation="0 0 0">
       </a-video>
     </a-entity>
@@ -294,7 +294,7 @@
     const overlay = document.getElementById('overlay-container');
     const scannerGuide = document.getElementById('scanner-guide');
     const sceneEl = document.querySelector('a-scene');
-    console.log("[AR] App initialized - v3.2");
+    console.log("[AR] App initialized - v3.3");
     // Force continuous autofocus at camera initialization (tested stable method)
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
@@ -369,7 +369,7 @@
           }
           
           arSystem.start();
-          document.getElementById('version-badge').innerText = 'v3.2 - Scanning';
+          document.getElementById('version-badge').innerText = 'v3.3 - Scanning';
           console.log("[AR] Tracking started successfully.");
         } else {
           console.error("[AR] Error: AR System not found.");
