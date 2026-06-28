@@ -186,7 +186,7 @@
         function updateBadge(status, color) {
           const badge = document.getElementById('version-badge');
           if (badge) {
-            badge.innerText = `v3.0 - ${status}`;
+            badge.innerText = `v3.1 - ${status}`;
             if (color) badge.style.borderColor = color;
           }
         }
@@ -279,7 +279,7 @@
   </div>
 
   <!-- Elegant Status Badge (Clean alternative to raw debug logs) -->
-  <div id="version-badge">v3.0 - Ready</div>
+  <div id="version-badge">v3.1 - Ready</div>
 
   <!-- AR Scene Setup (autoStart set to false so it waits for click to trigger browser permission) -->
   <a-scene 
@@ -323,22 +323,30 @@
     const scannerGuide = document.getElementById('scanner-guide');
     const sceneEl = document.querySelector('a-scene');
 
-    console.log("[AR] App initialized - v3.0");
+    console.log("[AR] App initialized - v3.1");
 
-    // Force continuous autofocus and HD resolution at camera initialization (safe fallback mode)
+    // Force continuous autofocus at camera initialization (tested stable method)
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-      navigator.mediaDevices.getUserMedia = function(constraints) {
-        if (constraints && constraints.video) {
-          if (typeof constraints.video === 'object') {
-            // Request ideal HD resolution without enforcing strict min constraints to prevent crashes on older cameras
-            constraints.video.width = { ideal: 1280 };
-            constraints.video.height = { ideal: 720 };
-            // Request continuous hardware autofocus
-            constraints.video.advanced = [{ focusMode: "continuous" }];
+      navigator.mediaDevices.getUserMedia = async function(constraints) {
+        try {
+          const stream = await originalGetUserMedia(constraints);
+          const track = stream.getVideoTracks()[0];
+          if (track && typeof track.getCapabilities === 'function') {
+            const capabilities = track.getCapabilities();
+            if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+              console.log("[AR] Applying continuous focus...");
+              track.applyConstraints({
+                advanced: [{ focusMode: 'continuous' }]
+              }).catch(err => {
+                console.warn("[AR] Focus apply failed silently:", err);
+              });
+            }
           }
+          return stream;
+        } catch (e) {
+          throw e;
         }
-        return originalGetUserMedia(constraints);
       };
     }
 
@@ -378,7 +386,7 @@
           }
           
           arSystem.start();
-          document.getElementById('version-badge').innerText = 'v3.0 - Scanning';
+          document.getElementById('version-badge').innerText = 'v3.1 - Scanning';
           console.log("[AR] Tracking started successfully.");
         } else {
           console.error("[AR] Error: AR System not found.");
