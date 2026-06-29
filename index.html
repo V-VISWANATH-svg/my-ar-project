@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
   <title>Magic AR Frame</title>
   
+  <!-- A-Frame and MindAR libraries -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
@@ -16,10 +17,13 @@
       background-color: #000;
     }
 
+    /* Premium Glassmorphism UI Overlay */
     #overlay-container {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       z-index: 9999;
       display: flex;
       flex-direction: column;
@@ -83,13 +87,23 @@
       outline: none;
       letter-spacing: 0.5px;
     }
-    .btn-start:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(139, 92, 246, 0.5); }
-    .btn-start:active { transform: scale(0.98); }
 
+    .btn-start:hover {
+      transform: scale(1.05);
+      box-shadow: 0 15px 30px rgba(139, 92, 246, 0.5);
+    }
+
+    .btn-start:active {
+      transform: scale(0.98);
+    }
+
+    /* Scanning animation overlay (Only visible when AR is active) */
     #scanner-guide {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
       z-index: 100;
       display: none;
@@ -134,9 +148,11 @@
       backdrop-filter: blur(4px);
     }
 
+    /* Elegant Version Badge at the bottom left */
     #version-badge {
       position: absolute;
-      bottom: 15px; left: 15px;
+      bottom: 15px;
+      left: 15px;
       color: rgba(255, 255, 255, 0.75);
       background: rgba(15, 23, 42, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -154,40 +170,29 @@
     }
   </style>
 
+  <!-- CRITICAL: A-Frame components MUST be registered in the <head> before <a-scene> is parsed -->
   <script>
-    const MANUAL_ASPECT_RATIO = 1.4; // Fallback if video metadata not yet loaded
+    // Poster image exact dimensions: 768 x 1024 pixels → ratio = 1024/768 = 1.3333
+    // This covers the FULL poster including any decorative frame border in the image
+    const POSTER_ASPECT_RATIO = 1.3333;
 
     AFRAME.registerComponent('video-handler', {
       init: function () {
         const marker = this.el;
         const aVideo = marker.querySelector('a-video');
         let playPromise = null;
-        let detectedAspect = null; // Auto-detected from video metadata
 
         function updateBadge(status, color) {
           const badge = document.getElementById('version-badge');
-          if (badge) { badge.innerText = `v3.5 - ${status}`; if (color) badge.style.borderColor = color; }
-        }
-
-        // Auto-detect video aspect ratio as soon as metadata loads
-        const videoEl = document.querySelector('#ar-video');
-        if (videoEl) {
-          const onMeta = () => {
-            if (videoEl.videoWidth && videoEl.videoHeight) {
-              detectedAspect = videoEl.videoHeight / videoEl.videoWidth;
-              console.log(`[AR] Auto aspect ratio detected: ${detectedAspect.toFixed(3)} (${videoEl.videoWidth}x${videoEl.videoHeight})`);
-            }
-          };
-          if (videoEl.readyState >= 1) { onMeta(); } // Already loaded
-          else { videoEl.addEventListener('loadedmetadata', onMeta); }
+          if (badge) { badge.innerText = `v3.7 - ${status}`; if (color) badge.style.borderColor = color; }
         }
 
         function applyAspect() {
-          const aspect = detectedAspect || MANUAL_ASPECT_RATIO;
+          // Use poster ratio so video covers the FULL poster area (not just center)
           aVideo.setAttribute('width', '1');
-          aVideo.setAttribute('height', aspect.toString());
-          aVideo.setAttribute('geometry', { primitive: 'plane', width: 1, height: aspect });
-          console.log(`[AR] Video sized: 1 x ${aspect.toFixed(3)} (${detectedAspect ? 'auto' : 'fallback'})`);
+          aVideo.setAttribute('height', POSTER_ASPECT_RATIO.toString());
+          aVideo.setAttribute('geometry', { primitive: 'plane', width: 1, height: POSTER_ASPECT_RATIO });
+          console.log(`[AR] Video plane set to: 1 x ${POSTER_ASPECT_RATIO} (poster ratio)`);
         }
 
         marker.addEventListener('targetFound', () => {
@@ -227,6 +232,7 @@
 </head>
 <body>
 
+  <!-- Premium Overlay Screen for Audio Unmute Activation -->
   <div id="overlay-container">
     <div class="card">
       <h1>Magic AR Frame</h1>
@@ -235,13 +241,18 @@
     </div>
   </div>
 
+  <!-- Camera Scanning Guide -->
   <div id="scanner-guide">
-    <div class="scan-box"><div class="scan-line"></div></div>
+    <div class="scan-box">
+      <div class="scan-line"></div>
+    </div>
     <div class="scan-text">Photo-ஐ கேமரா நேராக காட்டவும்</div>
   </div>
 
-  <div id="version-badge">v3.5 - Ready</div>
+  <!-- Elegant Status Badge (Clean alternative to raw debug logs) -->
+  <div id="version-badge">v3.7 - Ready</div>
 
+  <!-- AR Scene Setup (autoStart set to false so it waits for click to trigger browser permission) -->
   <a-scene 
     mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 15; filterMinCF: 0.05; filterBeta: 1.0;" 
     color-space="sRGB" 
@@ -250,6 +261,7 @@
     device-orientation-permission-ui="enabled: false">
     
     <a-assets>
+      <!-- Target Video File (Must be local video.mp4 in GitHub Repo) -->
       <video 
         id="ar-video" 
         src="./video.mp4" 
@@ -263,7 +275,9 @@
 
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
+    <!-- AR Target (index 0 corresponds to the compiled photo in targets.mind) -->
     <a-entity mindar-image-target="targetIndex: 0" video-handler>
+      <!-- Aspect ratio will be updated dynamically via JS -->
       <a-video 
         src="#ar-video" 
         width="1" 
@@ -280,9 +294,9 @@
     const scannerGuide = document.getElementById('scanner-guide');
     const sceneEl = document.querySelector('a-scene');
 
-    console.log("[AR] App initialized - v3.5");
+    console.log("[AR] App initialized - v3.7");
 
-    // Force continuous autofocus at camera initialization (safe - applied before stream returns)
+    // Force continuous autofocus at camera initialization (tested stable method)
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
       navigator.mediaDevices.getUserMedia = async function(constraints) {
@@ -307,7 +321,9 @@
       };
     }
 
-    // Kill cached/stale streams before AR starts (fixes "Allow all the time" second scan bug)
+    // KEY FIX: Kill any cached/stale camera streams before starting AR.
+    // "Allow all the time" permission causes Android Chrome to reuse old frozen streams.
+    // Stopping all tracks forces Chrome to open a fresh stream every time.
     async function killAllCameraTracks() {
       try {
         const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -321,8 +337,10 @@
     }
 
     startBtn.addEventListener('click', async () => {
+      // Step 1: Kill any frozen/cached streams from "Allow all the time" permission
       await killAllCameraTracks();
 
+      // Unlock mobile browser audio constraints (Stable method without load() interrupts)
       const video = document.getElementById('ar-video');
       if (video) {
         video.play().then(() => {
@@ -339,9 +357,11 @@
         if (scannerGuide) scannerGuide.style.display = 'flex';
       }, 500);
 
+      // Start the MindAR camera tracking manually inside user gesture (resolves black screen)
       try {
         const arSystem = sceneEl.systems["mindar-image-system"];
         if (arSystem) {
+          // Mock the UI if it's undefined to prevent library crash on "uiLoading: no"
           if (!arSystem.ui) {
             console.log("[AR] UI is undefined. Mocking UI to prevent crash.");
             arSystem.ui = {
@@ -353,8 +373,9 @@
               hideError: () => {}
             };
           }
+          
           arSystem.start();
-          document.getElementById('version-badge').innerText = 'v3.5 - Scanning';
+          document.getElementById('version-badge').innerText = 'v3.7 - Scanning';
           console.log("[AR] Tracking started successfully.");
         } else {
           console.error("[AR] Error: AR System not found.");
