@@ -184,7 +184,7 @@
 
         function updateBadge(status, color) {
           const badge = document.getElementById('version-badge');
-          if (badge) { badge.innerText = `v3.8 - ${status}`; if (color) badge.style.borderColor = color; }
+          if (badge) { badge.innerText = `v3.9 - ${status}`; if (color) badge.style.borderColor = color; }
         }
 
         function applyAspect() {
@@ -250,11 +250,11 @@
   </div>
 
   <!-- Elegant Status Badge (Clean alternative to raw debug logs) -->
-  <div id="version-badge">v3.8 - Ready</div>
+  <div id="version-badge">v3.9 - Ready</div>
 
   <!-- AR Scene Setup (autoStart set to false so it waits for click to trigger browser permission) -->
   <a-scene 
-    mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 15; filterMinCF: 0.05; filterBeta: 0.5;" 
+    mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 15; filterMinCF: 0.001; filterBeta: 0.5;" 
     color-space="sRGB" 
     renderer="colorManagement: true, physicallyCorrectLights: true" 
     vr-mode-ui="enabled: false" 
@@ -294,7 +294,7 @@
     const scannerGuide = document.getElementById('scanner-guide');
     const sceneEl = document.querySelector('a-scene');
 
-    console.log("[AR] App initialized - v3.8");
+    console.log("[AR] App initialized - v3.9");
 
     // Force continuous autofocus at camera initialization (tested stable method)
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -375,7 +375,7 @@
           }
           
           arSystem.start();
-          document.getElementById('version-badge').innerText = 'v3.8 - Scanning';
+          document.getElementById('version-badge').innerText = 'v3.9 - Scanning';
           console.log("[AR] Tracking started successfully.");
         } else {
           console.error("[AR] Error: AR System not found.");
